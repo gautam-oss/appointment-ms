@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_NAME: mydb
+      DATABASE_USER: user
+      DATABASE_PASSWORD: password
+      DATABASE_HOST: db
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - WDS_SOCKET_PORT=0
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  postgres_data:
